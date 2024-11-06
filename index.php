@@ -2,7 +2,6 @@
 session_start();
 include 'db.php';
 
-
 // Handle mahasiswa registration
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['register_mahasiswa'])) {
     $username = $_POST['username'];
@@ -31,24 +30,47 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['register_mahasiswa'])
     }
 }
 
+
+
 // Handle login
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['login'])) {
     $username = $_POST['username'];
     $password = $_POST['password'];
 
-    $query = "SELECT * FROM users WHERE username = '$username'";
-    $result = $conn->query($query);
+    // Use prepared statements to prevent SQL injection
+    $query = "SELECT * FROM users WHERE username = ?";
+    $stmt = $conn->prepare($query);
+    $stmt->bind_param('s', $username);
+    $stmt->execute();
+    $result = $stmt->get_result();
 
     if ($result->num_rows > 0) {
         $user = $result->fetch_assoc();
+        
+        // Debugging: Print username and stored hash for verification
+        echo 'Username: ' . $username . '<br>';
+        echo 'Stored Hash: ' . $user['password'] . '<br>';
+
+        // Verify password
         if (password_verify($password, $user['password'])) {
+            // Password is correct, set session and redirect
             $_SESSION['user_id'] = $user['id'];
             $_SESSION['role'] = $user['role'];
 
-            if ($user['role'] === 'mahasiswa') {
+            // Debugging: Check session values
+            echo 'Session set: ' . $_SESSION['user_id'] . ' with role ' . $_SESSION['role'] . '<br>';
+
+            // Redirect based on role
+            if ($user['role'] == 'mahasiswa') {
                 header('Location: dashboard_mahasiswa.php');
-            } else {
+            } elseif ($user['role'] == 'admin') {
                 header('Location: dashboard_admin.php');
+            } elseif ($user['role'] == 'kajur') {
+                $_SESSION['dosen_id'] = $user['dosen_id'];  // Store dosen_id in session for kajur
+                header('Location: dashboard_kajur.php');
+            } elseif ($user['role'] == 'wakil_dekan') {
+                $_SESSION['wakil_dekan_id'] = $user['wakil_dekan_id']; // Store wakil_dekan_id in session
+                header('Location: dashboard_wadek.php');
             }
             exit();
         } else {
@@ -58,6 +80,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['login'])) {
         $error = "Pengguna tidak ditemukan!";
     }
 }
+
+
 ?>
 
 <!DOCTYPE html>

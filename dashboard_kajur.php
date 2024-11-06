@@ -1,21 +1,33 @@
-<?php
+<?php 
 session_start();
 include 'db.php';
 
-if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'admin') {
+if (!isset($_SESSION['user_id']) || ($_SESSION['role'] !== 'admin' && $_SESSION['role'] !== 'kajur')) {
     header('Location: index.php');
     exit();
 }
 
+// Query to get total pengajuan
 $query = "SELECT * FROM pengajuan";
 $result = $conn->query($query);
+if (!$result) {
+    die("Query failed: " . $conn->error); // Show detailed error message if query fails
+}
 
+// Query to get count of pengajuan for today
 $queryDispenHariIni = "SELECT COUNT(*) AS total FROM pengajuan WHERE DATE(tanggal_pengajuan) = CURDATE()";
 $resultDispenHariIni = $conn->query($queryDispenHariIni);
+if (!$resultDispenHariIni) {
+    die("Query failed: " . $conn->error); // Show detailed error message if query fails
+}
 $dispenHariIni = $resultDispenHariIni->fetch_assoc()['total'];
 
+// Query to get count of pending pengajuan
 $queryDataTerbaru = "SELECT COUNT(*) AS total FROM pengajuan WHERE status = 'pending'";
 $resultDataTerbaru = $conn->query($queryDataTerbaru);
+if (!$resultDataTerbaru) {
+    die("Query failed: " . $conn->error); // Show detailed error message if query fails
+}
 $dataTerbaru = $resultDataTerbaru->fetch_assoc()['total'];
 
 ?>
@@ -252,10 +264,10 @@ $dataTerbaru = $resultDataTerbaru->fetch_assoc()['total'];
         <div style="height: 40px;"></div>
         <small class="text-muted ms-2" style="margin-top: 80px;">Menu</small>
         <nav class="nav flex-column mt-2">
-            <a class="nav-link active d-flex align-items-center text-dark" href="dashboard_wadek.php" style="color: black;">
+            <a class="nav-link active d-flex align-items-center text-dark" href="dashboard_kajur.php" style="color: black;">
                 <i class="bi bi-speedometer2 me-2"></i> Dashboard
             </a>
-            <a class="nav-link d-flex align-items-center text-dark" href="persetujuan_wadek.php" style="color: black;">
+            <a class="nav-link d-flex align-items-center text-dark" href="pengajuan_kajur.php" style="color: black;">
                 <i class="bi bi-file-earmark-text me-2"></i> Dispensasi
             </a>
             <a class="nav-link d-flex align-items-center text-dark" href="list_angkatan.php" style="color: black;">
@@ -383,11 +395,11 @@ $dataTerbaru = $resultDataTerbaru->fetch_assoc()['total'];
 
         // Info card button functions
         function lihatDispenHariIni() {
-            window.location.href = 'list_pengajuan.php';
+            window.location.href = 'pengajuan_kajur.php';
         }
 
         function lihatDataTerbaru() {
-            window.location.href = 'list_pengajuan.php';
+            window.location.href = 'pengajuan_kajur.php';
         }
         document.getElementById("sidebarToggle").addEventListener("click", function() {
     const sidebar = document.getElementById("sidebar");

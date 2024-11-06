@@ -2,26 +2,34 @@
 session_start();
 include 'db.php';
 
-if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'admin') {
+if (!isset($_SESSION['user_id']) || ($_SESSION['role'] !== 'admin' && $_SESSION['role'] !== 'kajur')) {
     header('Location: index.php');
     exit();
 }
 
-$query = "SELECT * FROM pengajuan";
-$result = $conn->query($query);
+// Ambil jurusan_id dari session (pastikan ini sudah diset saat ketua jurusan login)
+$jurusan_id_kajur = $_SESSION['jurusan_id'];
+
+// Query hanya mengambil pengajuan yang sesuai dengan jurusan ketua jurusan
+$query = "SELECT * FROM pengajuan WHERE jurusan_id = ?";
+$stmt = $conn->prepare($query);
+$stmt->bind_param("i", $jurusan_id);
+$stmt->execute();
+$result = $stmt->get_result();
 
 // Proses penghapusan jika ada permintaan
 if (isset($_GET['delete_id'])) {
     $delete_id = $_GET['delete_id'];
     $delete_query = "DELETE FROM pengajuan WHERE id = ?";
-    $stmt = $conn->prepare($delete_query);
-    $stmt->bind_param("i", $delete_id);
-    $stmt->execute();
-    $stmt->close();
-    header('Location: list_pengajuan.php');
+    $stmt_delete = $conn->prepare($delete_query);
+    $stmt_delete->bind_param("i", $delete_id);
+    $stmt_delete->execute();
+    $stmt_delete->close();
+    header('Location: pengajuan_kajur.php');
     exit();
 }
 ?>
+
 
 <!DOCTYPE html>
 <html lang="en">
@@ -187,10 +195,10 @@ if (isset($_GET['delete_id'])) {
         <div style="height: 40px;"></div>
         <small class="text-muted ms-2">Menu</small>
         <nav class="nav flex-column mt-2">
-            <a class="nav-link active d-flex align-items-center text-dark" href="dashboard_admin.php" style="color: black;">
+            <a class="nav-link active d-flex align-items-center text-dark" href="dashboard_kajur.php" style="color: black;">
                 <i class="bi bi-speedometer2 me-2"></i> Dashboard
             </a>
-            <a class="nav-link d-flex align-items-center text-dark" href="list_pengajuan.php" style="color: black;">
+            <a class="nav-link d-flex align-items-center text-dark" href="pengajuan_kajur.php" style="color: black;">
                 <i class="bi bi-file-earmark-text me-2"></i> Dispensasi
             </a>
             <a class="nav-link d-flex align-items-center text-dark" href="list_angkatan.php" style="color: black;">

@@ -2,10 +2,17 @@
 session_start();
 include 'db.php';
 
-if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'admin') {
-    header('Location: index.php');
+
+if (!isset($_SESSION['user_id'])) {
+    header('Location: index.php'); // User is not logged in
     exit();
 }
+
+if ($_SESSION['role'] !== 'wakil_dekan') {
+    header('Location: index.php'); // Unauthorized access
+    exit();
+}
+
 
 $query = "SELECT * FROM pengajuan";
 $result = $conn->query($query);
